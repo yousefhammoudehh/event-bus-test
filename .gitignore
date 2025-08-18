@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pkl
+*.egg-info/
+.eggs/
+*.egg
+*.log
+*.sqlite3
+*.db
+
+# Poetry
+poetry.lock
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Test, coverage, and lint
+.coverage
+.tox/
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Ruff
+ruff_cache/
+
+# Build
+build/
+dist/
+*.whl
+*.tar.gz
+
+# Docs
+/docs/_build/
+
+# Misc
+*.bak
+*.swp
+*.swo
+
+# Ignore temp and local infra
+/temp/
+/infrastructure/local/
