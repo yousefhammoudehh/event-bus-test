@@ -1,24 +1,32 @@
-from __future__ import annotations
-
 import json
 import logging
-from typing import Any
+from dataclasses import replace
+from typing import Any, Unpack
 
 import backoff
-from aiokafka import AIOKafkaProducer  # pyright: ignore[reportMissingTypeStubs]
+from aiokafka import AIOKafkaProducer
 
-from .config import SDKConfig
+from .config import Config, ConfigOverrides
 from .envelope import EventEnvelope
+from .events import OliveEvent
 from .observability import metrics
-from .schema import SchemaRegistry
+from .schema import schema_registry
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaProducerClient:
-    def __init__(self, cfg: SDKConfig, schema_registry: SchemaRegistry):
-        self.cfg = cfg
-        self.sr = schema_registry
+class Producer:
+    def __init__(self, cfg: Config | None = None, **overrides: Unpack[ConfigOverrides]):
+        """Create a Producer.
+
+        Args:
+            cfg: Optional Config instance. If not provided, defaults from env are used.
+            **overrides: Individual Config field overrides (e.g., acks='all', linger_ms=5).
+        """
+        # Base config from provided cfg or environment defaults, then apply overrides
+        base_cfg = cfg or Config()
+        # dataclasses.replace validates field names and immutably returns a new instance
+        self.cfg = replace(base_cfg, **overrides) if overrides else base_cfg
         self._producer: AIOKafkaProducer | None = None
 
     async def start(self) -> None:
@@ -53,42 +61,64 @@ class KafkaProducerClient:
             logger.info('Kafka producer stopped', extra={'service': self.cfg.service_name})
 
     @backoff.on_exception(backoff.expo, Exception, max_tries=5, jitter=backoff.full_jitter)
+    async def _publish_event_envelope(
+        self, event_envelope: EventEnvelope, domain: str, entity: str, event: str
+    ) -> None:
+        if not self._producer:
+            await self.start()
+
+        if self._producer is None:
+            # Should not happen as we start above, but guard for type-checkers
+            raise RuntimeError('Producer not started')
+
+        topic = schema_registry.topic(domain, entity, event)
+        data = json.dumps(event_envelope.to_dict()).encode('utf-8')
+        hdrs = [(k, v.encode('utf-8')) for k, v in (event_envelope.headers or {}).items()]
+
+        await self._producer.send_and_wait(topic, data, headers=hdrs)
+        metrics.events_published.labels(
+            topic=topic, service=self.cfg.service_name, version=event_envelope.event_version
+        ).inc()
+        logger.info(
+            'event_published',
+            extra={
+                'topic': topic,
+                'event_id': event_envelope.event_id,
+                'event_type': event_envelope.event_type,
+                'version': event_envelope.event_version,
+                'correlation_id': event_envelope.correlation_id,
+            },
+        )
+
     async def publish(
         self,
         *,
         domain: str,
         entity: str,
         event: str,
-        version: str,
         payload: dict[str, Any],
+        version: str | None = None,
         correlation_id: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> EventEnvelope:
-        if not self._producer:
-            await self.start()
-        self.sr.validate(domain, f'{entity}.{event}', version, payload)
+        # Resolve version if not provided (latest) and validate
+        resolved_version = version or await schema_registry.latest_version(domain, entity, event)
+        await schema_registry.validate(domain, entity, event, resolved_version, payload)
 
         envelope = EventEnvelope.build(
             event_type=f'{domain}.{entity}.{event}',
-            event_version=version,
+            event_version=resolved_version,
             source_service=self.cfg.service_name,
             payload=payload,
             correlation_id=correlation_id,
-            extra_headers=headers,
+            headers=headers,
         )
-        topic = self.sr.topic(domain, entity, event, version)
-        data = json.dumps(envelope.to_dict()).encode('utf-8')
-        hdrs = [(k, v.encode('utf-8')) for k, v in (headers or {}).items()]
-        await self._producer.send_and_wait(topic, data, headers=hdrs)
-        metrics.events_published.labels(topic=topic, service=self.cfg.service_name, version=version).inc()
-        logger.info(
-            'event_published',
-            extra={
-                'topic': topic,
-                'event_id': envelope.event_id,
-                'event_type': envelope.event_type,
-                'version': version,
-                'correlation_id': envelope.correlation_id,
-            },
-        )
+        await self._publish_event_envelope(envelope, domain, entity, event)
+
+        return envelope
+
+    @backoff.on_exception(backoff.expo, Exception, max_tries=5, jitter=backoff.full_jitter)
+    async def publish_event(self, olive_event: OliveEvent) -> EventEnvelope:
+        envelope = olive_event.to_envelope(self.cfg.service_name)
+        await self._publish_event_envelope(envelope, olive_event.domain, olive_event.entity, olive_event.event)
         return envelope

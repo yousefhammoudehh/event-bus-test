@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -33,18 +31,19 @@ class EventEnvelope:
         event_version: str,
         source_service: str,
         payload: dict[str, Any],
+        event_id: str | None = None,
         correlation_id: str | None = None,
-        extra_headers: dict[str, str] | None = None,
-    ) -> EventEnvelope:
+        headers: dict[str, str] | None = None,
+    ) -> 'EventEnvelope':
         return cls(
-            event_id=str(uuid.uuid4()),
+            event_id=event_id or str(uuid.uuid4()),
             event_type=event_type,
             event_version=event_version,
             timestamp=iso_utc_ts(),
             source_service=source_service,
             payload=payload,
             correlation_id=correlation_id,
-            headers=extra_headers or {},
+            headers=headers or {},
         )
 
     def to_dict(self) -> dict[str, Any]:

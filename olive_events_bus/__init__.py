@@ -1,16 +1,8 @@
-import logging
-
-from .config import SDKConfig
+from .config import Config
+from .consumer import Consumer
 from .envelope import EventEnvelope
+from .events import OliveEvent, OliveEventType
+from .producer import Producer
 from .schema import SchemaRegistry
 
-# Optional exports; available if dependencies installed
-try:  # pragma: no cover - optional
-    from .consumer import KafkaConsumerClient
-    from .producer import KafkaProducerClient
-
-except Exception as exc:  # pragma: no cover - optional
-    logging.exception('Failed to import optional Kafka dependencies: %s', exc)
-    pass
-
-__all__ = ['EventEnvelope', 'KafkaConsumerClient', 'KafkaProducerClient', 'SDKConfig', 'SchemaRegistry']
+__all__ = ['Config', 'Consumer', 'EventEnvelope', 'OliveEvent', 'OliveEventType', 'Producer', 'SchemaRegistry']

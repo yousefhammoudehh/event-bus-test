@@ -17,6 +17,7 @@ python = ">=3.13,<4.0"
 aiokafka = "^0.12.0"
 jsonschema = "^4.25.1"
 aiohttp = "^3.12.15"
+aiofiles = "^24.1.0"
 backoff = "^2.2.1"
 prometheus-client = "^0.22.1"
 opentelemetry-api = "^1.36.0"
@@ -31,6 +32,7 @@ admin = ["kafka-python-ng"]
 outbox = ["psycopg", "SQLAlchemy"]
 
 [tool.poetry.group.dev.dependencies]
+types-aiofiles = "^24.1.0.20250822"
 ruff = "^0.12.10"
 mypy = "^1.17.1"
 pre-commit = "^4.3.0"
@@ -87,10 +89,18 @@ max-args = 8
 quote-style = 'single'
 skip-magic-trailing-comma = true
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
 [tool.mypy]
 python_version = '3.13'
 strict = true
 show_error_codes = true
 explicit_package_bases = true
 namespace_packages = true
+ignore_missing_imports = true
 files = ["olive_events_bus", "infrastructure", "scripts", "examples"]
+
+[tool.pyright]
+# Silence Pylance/Pyright diagnostic about missing third-party type stubs
+reportMissingTypeStubs = "none"

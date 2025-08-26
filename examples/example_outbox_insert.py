@@ -1,15 +1,17 @@
-from olive_events_bus.outbox import enqueue_outbox_event, OUTBOX_TABLE_DDL
+from typing import Any
 
-def demo(cur):
+from olive_events_bus.outbox import OUTBOX_TABLE_DDL, enqueue_outbox_event
+
+
+def demo(cur: Any) -> str:
     # ensure table exists (one-time migration should handle this in real usage)
     cur.execute(OUTBOX_TABLE_DDL)
 
-    event_id = enqueue_outbox_event(
+    return enqueue_outbox_event(
         cur,
-        topic="identity-provider.user.created.v1",
-        event_type="created",
-        payload={"user_id": "11111111-1111-1111-1111-111111111111", "email": "user@example.com"},
-        aggregate_id="11111111-1111-1111-1111-111111111111",
-        headers={"correlation_id": "cor-123"},
+        topic='olive-identity-provider.user.created',
+        event_type='created',
+        payload={'user_id': '11111111-1111-1111-1111-111111111111', 'email': 'user@example.com'},
+        aggregate_id='11111111-1111-1111-1111-111111111111',
+        headers={'correlation_id': 'cor-123'},
     )
-    return event_id

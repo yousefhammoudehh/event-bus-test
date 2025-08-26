@@ -4,10 +4,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 try:
-    from kafka.admin import KafkaAdminClient, NewTopic  # type: ignore
+    from kafka.admin import KafkaAdminClient, NewTopic
 except Exception:  # pragma: no cover - optional dependency
-    KafkaAdminClient = None  # type: ignore
-    NewTopic = None  # type: ignore
+    KafkaAdminClient = None
+    NewTopic = None
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ def create_topics(bootstrap_servers: str, topics: Iterable[TopicSpec]) -> None:
         raise RuntimeError("kafka-python-ng not installed; install with extras 'admin'")
     admin = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
     try:
-        new_topics = [
+        new_topics: list[object] = [
             NewTopic(
                 name=t.name,
                 num_partitions=t.partitions,

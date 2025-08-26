@@ -3,11 +3,11 @@
 Producer:
 
 ```python
-from olive_events_bus import SDKConfig, SchemaRegistry, KafkaProducerClient
+from olive_events_bus import Config, SchemaRegistry, Producer
 
-cfg = SDKConfig(service_name="olive-identity-provider")
+cfg = Config(service_name="olive-identity-provider")
 sr = SchemaRegistry(schema_dir="olive_events_bus/schemas")
-prod = KafkaProducerClient(cfg, sr)
+prod = Producer(cfg, sr)
 
 # await prod.start(); await prod.publish(...); await prod.stop()
 ```
@@ -15,10 +15,10 @@ prod = KafkaProducerClient(cfg, sr)
 Consumer:
 
 ```python
-from olive_events_bus import SDKConfig, SchemaRegistry, KafkaConsumerClient
+from olive_events_bus import Config, SchemaRegistry, Consumer
 
-cfg = SDKConfig(service_name="olive-leaves")
+cfg = Config(service_name="olive-leaves")
 sr = SchemaRegistry(schema_dir="olive_events_bus/schemas")
-consumer = KafkaConsumerClient(cfg, sr, group="leaves-service")
+consumer = Consumer(cfg, sr, group="leaves-service")
 # await consumer.start(topic, handler); await consumer.poll_forever()
 ```
