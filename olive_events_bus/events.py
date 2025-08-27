@@ -109,3 +109,21 @@ class OliveEvent:
             headers=headers,
             correlation_id=correlation_id,
         )
+
+    @classmethod
+    async def from_envelope(cls, envelope: EventEnvelope) -> 'OliveEvent':
+        event_type = OliveEventType(envelope.event_type)
+        payload = envelope.payload
+        version = envelope.event_version
+        event_id = envelope.event_id
+        headers = envelope.headers
+        correlation_id = envelope.correlation_id
+        await schema_registry.validate(event_type.domain, event_type.entity, event_type.event, version, payload)
+        return cls(
+            event_type=event_type,
+            payload=payload,
+            version=version,
+            event_id=event_id,
+            headers=headers,
+            correlation_id=correlation_id,
+        )
