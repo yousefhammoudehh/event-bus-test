@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.olive.local/leaves/leave.approved.v1.json",
+  "title": "leaves.leave.approved.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "leave_id": { "type": "string", "format": "uuid" },
+    "employee_id": { "type": "string", "format": "uuid" },
+    "client_id": { "type": "string" },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": "string", "format": "date" },
+
+  "employee_name": { "type": "string" },
+  "leave_type": { "type": "string" },
+  "status": { "type": "string" }
+  },
+  "required": [
+    "leave_id",
+    "employee_id",
+    "start_date",
+    "end_date"
+  ]
+}

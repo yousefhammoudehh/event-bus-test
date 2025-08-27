@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.olive.local/leaves/leave.updated.v1.json",
+  "title": "leaves.leave.updated.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "leave_id": { "type": "string", "format": "uuid" },
+    "client_id": { "type": "string" },
+
+    "previous_start_date": { "type": "string", "format": "date" },
+    "previous_end_date": { "type": "string", "format": "date" },
+    "new_start_date": { "type": "string", "format": "date" },
+    "new_end_date": { "type": "string", "format": "date" },
+    "previous_status": { "type": "string" },
+    "requires_reapproval": { "type": "boolean" },
+
+    "employee_name": { "type": "string" },
+    "leave_type": { "type": "string" },
+    "status": { "type": "string" },
+
+    "approvers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "approver_id": { "type": "string", "format": "uuid" }
+        },
+        "required": ["approver_id"]
+      }
+    }
+  },
+  "required": [
+    "leave_id",
+    "approvers"
+  ],
+  "oneOf": [
+    {
+      "description": "Pre-approval update: status indicates not yet approved; approval required.",
+      "required": ["previous_status", "employee_name"]
+    },
+    {
+      "description": "Post-approval update: dates changed; may or may not require reapproval.",
+      "required": ["previous_start_date", "previous_end_date", "new_start_date", "new_end_date"]
+    }
+  ]
+}
