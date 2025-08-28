@@ -3,7 +3,7 @@
   "$id": "https://schemas.olive.local/leaves/leave.requested.v1.json",
   "title": "leaves.leave.requested.v1",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "leave_id": { "type": "string", "format": "uuid" },
     "employee_id": { "type": "string", "format": "uuid" },
